@@ -41,32 +41,34 @@ export default class CheckboxCyclerPlugin extends Plugin {
     let lineIndex = editor.getCursor().line;
     let line = editor.getLine(lineIndex);
     let lineTrimmed = line.trimStart();
-    let checkbox = lineTrimmed.substring(0, 5);
+    let trimSize = line.length - lineTrimmed.length;
+    let checkbox = lineTrimmed.substring(0, 6);
 
-    if (checkbox.length < 1) {
-      console.log("line too short");
-      return;
-    }
-    else if (!["-", "*", "+"].includes(checkbox[0])) {
-      console.log("line not list item");
-      return;
-    }
-    else if (checkbox[1] !== " " || checkbox[2] !== "[" || checkbox[4] !== "]") {
-      console.log("line not checkbox");
-      return;
+    // add bullet and box
+    if (checkbox.length < 2 || !["-", "*", "+"].includes(checkbox[0]) || checkbox[1]  !== " ") {
+      editor.replaceRange("- [ ] ", {line: lineIndex, ch: 0});
     }
 
-    let state = checkbox[3];
-    let stateIndex = line.length - lineTrimmed.length + 3;
-    let newState = states[(states.indexOf(state) + 1) % states.length];
+    // add box
+    else if (checkbox[1] !== " " || checkbox[2] !== "[" || checkbox[4] !== "]" || checkbox[5] !== " ") {
+      editor.replaceRange(" [ ]", {line: lineIndex, ch: trimSize + 1});
+    }
 
-    console.log(checkbox);
-    console.log("line: " + lineIndex + ", ch: " + stateIndex);
+    // cycle box state
+    else {
+      const stateIndex = 3;
+      let stateIndexOnLine = trimSize + stateIndex;
+      let state = checkbox[stateIndex];
+      let newState = states[(states.indexOf(state) + 1) % states.length];
 
-    editor.replaceRange(
-      newState,
-      {line: lineIndex, ch: stateIndex},
-      {line: lineIndex, ch: stateIndex + 1}
-    )
+      console.log(checkbox);
+      console.log("line: " + lineIndex + ", ch: " + stateIndexOnLine);
+
+      editor.replaceRange(
+        newState,
+        {line: lineIndex, ch: stateIndexOnLine},
+        {line: lineIndex, ch: stateIndexOnLine + 1}
+      )
+    }
   }
 }
