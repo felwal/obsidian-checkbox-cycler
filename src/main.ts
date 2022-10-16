@@ -1,8 +1,6 @@
 import { Plugin, Editor } from "obsidian";
 import { CheckboxCyclerPluginSettings, DEFAULT_SETTINGS, CheckboxCyclerSettingTab } from "./settings"
 
-const states = [" ", "/", "x", "-"];
-
 export default class CheckboxCyclerPlugin extends Plugin {
   settings: CheckboxCyclerPluginSettings;
 
@@ -57,11 +55,14 @@ export default class CheckboxCyclerPlugin extends Plugin {
 
     // add box
     else if (checkbox[1] !== " " || checkbox[2] !== "[" || checkbox[4] !== "]" || checkbox[5] !== " ") {
-      editor.replaceRange(" [ ]", {line: lineIndex, ch: trimSize + 1});
+      editor.replaceRange(
+        " [" + this.settings.states[0] + "]",
+        {line: lineIndex, ch: trimSize + 1}
+      );
     }
 
     // remove box
-    else if (checkbox[stateIndex] === states[states.length - 1]) {
+    else if (checkbox[stateIndex] === this.settings.states[this.settings.states.length - 1]) {
       editor.replaceRange(
         "",
         {line: lineIndex, ch: trimSize + 1},
@@ -73,7 +74,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
     else {
       let stateIndexOnLine = trimSize + stateIndex;
       let state = checkbox[stateIndex];
-      let newState = states[(states.indexOf(state) + 1) % states.length];
+      let newState = this.settings.states[(this.settings.states.indexOf(state) + 1) % this.settings.states.length];
 
       editor.replaceRange(
         newState,
