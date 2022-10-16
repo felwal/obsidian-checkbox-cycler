@@ -44,9 +44,11 @@ export default class CheckboxCyclerPlugin extends Plugin {
     let trimSize = line.length - lineTrimmed.length;
     let checkbox = lineTrimmed.substring(0, 6);
 
-    // add bullet and box
+    const stateIndex = 3;
+
+    // add bullet
     if (checkbox.length < 2 || !["-", "*", "+"].includes(checkbox[0]) || checkbox[1]  !== " ") {
-      editor.replaceRange("- [ ] ", {line: lineIndex, ch: 0});
+      editor.replaceRange("- ", {line: lineIndex, ch: 0});
     }
 
     // add box
@@ -54,15 +56,20 @@ export default class CheckboxCyclerPlugin extends Plugin {
       editor.replaceRange(" [ ]", {line: lineIndex, ch: trimSize + 1});
     }
 
+    // remove box
+    else if (checkbox[stateIndex] === states[states.length - 1]) {
+      editor.replaceRange(
+        "",
+        {line: lineIndex, ch: trimSize + 1},
+        {line: lineIndex, ch: trimSize + 5}
+      );
+    }
+
     // cycle box state
     else {
-      const stateIndex = 3;
       let stateIndexOnLine = trimSize + stateIndex;
       let state = checkbox[stateIndex];
       let newState = states[(states.indexOf(state) + 1) % states.length];
-
-      console.log(checkbox);
-      console.log("line: " + lineIndex + ", ch: " + stateIndexOnLine);
 
       editor.replaceRange(
         newState,
