@@ -48,7 +48,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
 
     // add bullet
     if (checkbox.length < 2 || !["-", "*", "+"].includes(checkbox[0]) || checkbox[1]  !== " ") {
-      editor.replaceRange("- ", {line: lineIndex, ch: 0});
+      editor.replaceRange("- ", {line: lineIndex, ch: trimSize});
 
       if (editor.getCursor().ch <= trimSize) {
         editor.setCursor({line: lineIndex, ch: trimSize + 2});
