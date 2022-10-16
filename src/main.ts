@@ -1,8 +1,8 @@
 import { Plugin } from "obsidian";
-import { SamplePluginPluginSettings, DEFAULT_SETTINGS, SampleSettingTab } from "./settings"
+import { CheckboxCyclerPluginSettings, DEFAULT_SETTINGS, CheckboxCyclerSettingTab } from "./settings"
 
-export default class SamplePluginPlugin extends Plugin {
-  settings: SamplePluginPluginSettings;
+export default class CheckboxCyclerPlugin extends Plugin {
+  settings: CheckboxCyclerPluginSettings;
 
   async onload() {
     console.log("loading plugin");
@@ -11,7 +11,7 @@ export default class SamplePluginPlugin extends Plugin {
 		this.loadCommands();
     this.loadRibbon();
 
-    this.addSettingTab(new SampleSettingTab(this.app, this));
+    this.addSettingTab(new CheckboxCyclerSettingTab(this.app, this));
 
   }
 

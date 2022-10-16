@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-checkbox-cycler",
 	"version": "0.0.0",
 	"description": "Description",
 	"main": "main.js",

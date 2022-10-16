@@ -1,18 +1,18 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import SamplePluginPlugin from "./main";
+import CheckboxCyclerPlugin from "./main";
 
-export interface SamplePluginPluginSettings {
+export interface CheckboxCyclerPluginSettings {
   mySetting: string;
 }
 
-export const DEFAULT_SETTINGS: SamplePluginPluginSettings = {
+export const DEFAULT_SETTINGS: CheckboxCyclerPluginSettings = {
   mySetting: "default"
 }
 
-export class SampleSettingTab extends PluginSettingTab {
-  plugin: SamplePluginPlugin;
+export class CheckboxCyclerSettingTab extends PluginSettingTab {
+  plugin: CheckboxCyclerPlugin;
 
-  constructor(app: App, plugin: SamplePluginPlugin) {
+  constructor(app: App, plugin: CheckboxCyclerPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -21,6 +21,6 @@ export class SampleSettingTab extends PluginSettingTab {
     const {containerEl} = this;
 
     containerEl.empty();
-    containerEl.createEl("h1", {text: "Sample Plugin"});
+    containerEl.createEl("h1", {text: "Checkbox Cycler"});
   }
 }
