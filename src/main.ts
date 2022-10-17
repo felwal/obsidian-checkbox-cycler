@@ -42,6 +42,10 @@ export default class CheckboxCyclerPlugin extends Plugin {
   registerEvents() {
     // register checkbox click in live preview mode
     this.registerDomEvent(document, "click", (evt: MouseEvent) => {
+      if (!this.settings.previewModeEnabled) {
+        return;
+      }
+
       const checkbox = Object(evt.target);
 
       if (checkbox.className === "task-list-item-checkbox") {

@@ -3,10 +3,12 @@ import CheckboxCyclerPlugin from "./main";
 
 export interface CheckboxCyclerPluginSettings {
   states: Array<string>;
+  previewModeEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: CheckboxCyclerPluginSettings = {
-  states: [" ", "/", "x", "-"]
+  states: [" ", "/", "x", "-"],
+  previewModeEnabled: true
 }
 
 export class CheckboxCyclerSettingTab extends PluginSettingTab {
@@ -22,6 +24,19 @@ export class CheckboxCyclerSettingTab extends PluginSettingTab {
 
     containerEl.empty();
     containerEl.createEl("h1", {text: "Checkbox Cycler"});
+
+    // live preview click
+    new Setting(containerEl)
+      .setName("Enable interaction with live preview mode")
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.previewModeEnabled)
+        .onChange(async value => {
+          this.plugin.settings.previewModeEnabled = value;
+
+          await this.plugin.saveSettings();
+        })
+      )
+
     containerEl.createEl("h2", {text: "States"});
 
     // states
