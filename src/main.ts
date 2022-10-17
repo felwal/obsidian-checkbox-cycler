@@ -22,6 +22,8 @@ export default class CheckboxCyclerPlugin extends Plugin {
     console.log("unloading plugin");
   }
 
+  //
+
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
@@ -35,14 +37,14 @@ export default class CheckboxCyclerPlugin extends Plugin {
       id: "cycle-bullet-checkbox",
       name: "Cycle bullet/checkbox",
       icon: "checkbox-glyph",
-      editorCallback: (editor: Editor) => this.cycleBulletOrCheckbox(editor)
+      editorCallback: (editor: Editor) => this.cycleCheckbox(editor, true)
     });
 
     this.addCommand({
       id: "cycle-checkbox-status",
       name: "Cycle checkbox status",
       icon: "checkbox-glyph",
-      editorCallback: (editor: Editor) => this.cycleCheckboxStatus(editor)
+      editorCallback: (editor: Editor) => this.cycleCheckbox(editor, false)
     });
   }
 
@@ -78,7 +80,9 @@ export default class CheckboxCyclerPlugin extends Plugin {
     });
   }
 
-  cycleBulletOrCheckbox(editor: Editor) {
+  //
+
+  cycleCheckbox(editor: Editor, cycleThroughBullet: boolean) {
     let lineIndex = editor.getCursor().line;
     let line = editor.getLine(lineIndex);
     let lineTrimmed = line.trimStart();
@@ -87,36 +91,20 @@ export default class CheckboxCyclerPlugin extends Plugin {
     let checkbox = lineTrimmed.substring(0, 6);
 
     if (!this.isBullet(checkbox)) {
-      this.insert(editor, "- ", lineIndex, trimSize);
+      // add bullet or checkbox
+      this.insert(editor, cycleThroughBullet ? "- " : "- [ ] ", lineIndex, trimSize);
     }
     else if (!this.isCheckbox(checkbox)) {
+      // add checkbox to bullet
       this.insert(editor, " [" + this.settings.states[0] + "]", lineIndex, trimSize + 1);
     }
-    else if (checkbox[STATE_INDEX] === this.settings.states[this.settings.states.length - 1]) {
+    else if (cycleThroughBullet && checkbox[STATE_INDEX] === this.settings.states[this.settings.states.length - 1]) {
+      // remove checkbox from bullet
       editor.replaceRange(
         "",
         {line: lineIndex, ch: trimSize + 1},
         {line: lineIndex, ch: trimSize + 5}
       );
-    }
-    else {
-      this.updateCheckboxState(editor, lineIndex, trimSize, checkbox);
-    }
-  }
-
-  cycleCheckboxStatus(editor: Editor) {
-    let lineIndex = editor.getCursor().line;
-    let line = editor.getLine(lineIndex);
-    let lineTrimmed = line.trimStart();
-
-    let trimSize = line.length - lineTrimmed.length;
-    let checkbox = lineTrimmed.substring(0, 6);
-
-    if (!this.isBullet(checkbox)) {
-      this.insert(editor, "- [ ] ", lineIndex, trimSize);
-    }
-    else if (!this.isCheckbox(checkbox)) {
-      this.insert(editor, " [" + this.settings.states[0] + "]", lineIndex, trimSize + 1);
     }
     else {
       this.updateCheckboxState(editor, lineIndex, trimSize, checkbox);
@@ -144,6 +132,8 @@ export default class CheckboxCyclerPlugin extends Plugin {
       {line: lineIndex, ch: stateIndexOnLine + 1}
     )
   }
+
+  //
 
   isBullet(line: string) {
     return line.length > 1 && ["-", "*", "+"].includes(line[0]) && line[1] === " ";
