@@ -1,5 +1,9 @@
 import { Plugin, Editor } from "obsidian";
+import { EditorView } from "@codemirror/view";
 import { CheckboxCyclerPluginSettings, DEFAULT_SETTINGS, CheckboxCyclerSettingTab } from "./settings"
+import { type } from "os";
+
+const STATE_INDEX = 3;
 
 export default class CheckboxCyclerPlugin extends Plugin {
   settings: CheckboxCyclerPluginSettings;
@@ -9,6 +13,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
 
     await this.loadSettings();
     this.loadCommands();
+    this.registerEvents();
 
     this.addSettingTab(new CheckboxCyclerSettingTab(this.app, this));
   }
@@ -30,19 +35,45 @@ export default class CheckboxCyclerPlugin extends Plugin {
       id: "cycle-checkbox",
       name: "Cycle checkbox",
       icon: "checkbox-glyph",
-      editorCallback: (editor: Editor) => this.cycleCheckbox(editor)
+      editorCallback: (editor: Editor) => this.cycleBulletOrCheckbox(editor)
     });
   }
 
-  cycleCheckbox(editor: Editor) {
-    // - [ ]
+  registerEvents() {
+    // register checkbox click in live preview mode
+    this.registerDomEvent(document, "click", (evt: MouseEvent) => {
+      const checkbox = Object(evt.target);
+
+      if (checkbox.className === "task-list-item-checkbox") {
+        evt.preventDefault();
+
+        try {
+          // @ts-expect-error, not typed
+          let editor = this.app.workspace.activeLeaf?.view.editor as Editor;
+          // @ts-expect-error, not typed
+          let editorView = editor.cm as EditorView;
+          let offset = editorView.posAtDOM(checkbox);
+
+          let pos = editor.offsetToPos(offset);
+          let lineIndex = pos.line;
+          console.log(lineIndex);
+
+          this.cycleCheckbox(editor, lineIndex)
+        }
+        catch (e) {
+          console.log("not supported in reading mode");
+        }
+      }
+    });
+  }
+
+  cycleBulletOrCheckbox(editor: Editor) {
     let lineIndex = editor.getCursor().line;
     let line = editor.getLine(lineIndex);
     let lineTrimmed = line.trimStart();
+
     let trimSize = line.length - lineTrimmed.length;
     let checkbox = lineTrimmed.substring(0, 6);
-
-    const stateIndex = 3;
 
     // add bullet
     if (checkbox.length < 2 || !["-", "*", "+"].includes(checkbox[0]) || checkbox[1]  !== " ") {
@@ -62,7 +93,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
     }
 
     // remove box
-    else if (checkbox[stateIndex] === this.settings.states[this.settings.states.length - 1]) {
+    else if (checkbox[STATE_INDEX] === this.settings.states[this.settings.states.length - 1]) {
       editor.replaceRange(
         "",
         {line: lineIndex, ch: trimSize + 1},
@@ -72,15 +103,29 @@ export default class CheckboxCyclerPlugin extends Plugin {
 
     // cycle box state
     else {
-      let stateIndexOnLine = trimSize + stateIndex;
-      let state = checkbox[stateIndex];
-      let newState = this.settings.states[(this.settings.states.indexOf(state) + 1) % this.settings.states.length];
-
-      editor.replaceRange(
-        newState,
-        {line: lineIndex, ch: stateIndexOnLine},
-        {line: lineIndex, ch: stateIndexOnLine + 1}
-      )
+      this.updateCheckboxState(editor, lineIndex, trimSize, checkbox);
     }
+  }
+
+  cycleCheckbox(editor: Editor, lineIndex: number) {
+    let line = editor.getLine(lineIndex);
+    let lineTrimmed = line.trimStart();
+
+    let trimSize = line.length - lineTrimmed.length;
+    let checkbox = lineTrimmed.substring(0, 6);
+
+    this.updateCheckboxState(editor, lineIndex, trimSize, checkbox);
+  }
+
+  updateCheckboxState(editor: Editor, lineIndex: number, trimSize: number, checkbox: string) {
+    let stateIndexOnLine = trimSize + STATE_INDEX;
+    let state = checkbox[STATE_INDEX];
+    let newState = this.settings.states[(this.settings.states.indexOf(state) + 1) % this.settings.states.length];
+
+    editor.replaceRange(
+      newState,
+      {line: lineIndex, ch: stateIndexOnLine},
+      {line: lineIndex, ch: stateIndexOnLine + 1}
+    )
   }
 }
