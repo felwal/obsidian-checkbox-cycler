@@ -49,7 +49,7 @@ export class CheckboxCyclerSettingTab extends PluginSettingTab {
         .setPlaceholder("Any character")
         .setValue(state)
         .onChange(async (value) => {
-          this.plugin.settings.states[i] = value ? value[0] : "□";
+          this.plugin.settings.states[i] = value ? value[0] : " ";
 
           await this.plugin.saveSettings();
         })

@@ -1,12 +1,13 @@
-import { Plugin, Editor } from "obsidian";
+import { Plugin, Editor, TFile, CachedMetadata } from "obsidian";
 import { EditorView } from "@codemirror/view";
 import { CheckboxCyclerPluginSettings, DEFAULT_SETTINGS, CheckboxCyclerSettingTab } from "./settings"
-import { type } from "os";
 
 const STATE_INDEX = 3;
+const FILE_CUSTOM_STATES_FM = "cb-states";
 
 export default class CheckboxCyclerPlugin extends Plugin {
   settings: CheckboxCyclerPluginSettings;
+  states: Array<string>;
 
   async onload() {
     console.log("loading plugin");
@@ -14,6 +15,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
     await this.loadSettings();
     this.loadCommands();
     this.registerEvents();
+    this.loadStates(this.app.workspace.getActiveFile());
 
     this.addSettingTab(new CheckboxCyclerSettingTab(this.app, this));
   }
@@ -49,7 +51,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
   }
 
   registerEvents() {
-    // register checkbox click in live preview mode
+    // checkbox click in live preview mode
     this.registerDomEvent(document, "click", (evt: MouseEvent) => {
       if (!this.settings.previewModeEnabled) {
         return;
@@ -78,6 +80,36 @@ export default class CheckboxCyclerPlugin extends Plugin {
         }
       }
     });
+
+    // file open
+    this.registerEvent(this.app.workspace.on("file-open", (file: TFile) => {
+      console.log("file-open");
+      this.loadStates(file);
+    }));
+
+    // metadata change
+    //this.registerEvent(this.app.metadataCache.on("changed", (file: TFile, data: string, cache: CachedMetadata) => {
+    //  console.log("metadata changed");
+    //  this.loadStates(file);
+    //}));
+  }
+
+  loadStates(file: TFile | null) {
+    if (file) {
+      let fm = this.getFrontMatter(file);
+
+      if (fm) {
+        let states = fm[FILE_CUSTOM_STATES_FM];
+
+        if (states) {
+          console.log(states);
+          this.states = states.map((s: string) => s.length > 0 ? s[0] : " ");
+          return;
+        }
+      }
+    }
+
+    this.states = this.settings.states;
   }
 
   //
@@ -92,13 +124,13 @@ export default class CheckboxCyclerPlugin extends Plugin {
 
     if (!this.isBullet(checkbox)) {
       // add bullet or checkbox
-      this.insert(editor, cycleThroughBullet ? "- " : "- [ ] ", lineIndex, trimSize);
+      this.insert(editor, cycleThroughBullet ? "- " : "- [" + this.states[0] + "] ", lineIndex, trimSize);
     }
     else if (!this.isCheckbox(checkbox)) {
       // add checkbox to bullet
-      this.insert(editor, " [" + this.settings.states[0] + "]", lineIndex, trimSize + 1);
+      this.insert(editor, " [" + this.states[0] + "]", lineIndex, trimSize + 1);
     }
-    else if (cycleThroughBullet && checkbox[STATE_INDEX] === this.settings.states[this.settings.states.length - 1]) {
+    else if (cycleThroughBullet && checkbox[STATE_INDEX] === this.states[this.states.length - 1]) {
       // remove checkbox from bullet
       editor.replaceRange(
         "",
@@ -124,7 +156,7 @@ export default class CheckboxCyclerPlugin extends Plugin {
   updateCheckboxState(editor: Editor, lineIndex: number, trimSize: number, checkbox: string) {
     let stateIndexOnLine = trimSize + STATE_INDEX;
     let state = checkbox[STATE_INDEX];
-    let newState = this.settings.states[(this.settings.states.indexOf(state) + 1) % this.settings.states.length];
+    let newState = this.states[(this.states.indexOf(state) + 1) % this.states.length];
 
     editor.replaceRange(
       newState,
@@ -134,6 +166,10 @@ export default class CheckboxCyclerPlugin extends Plugin {
   }
 
   //
+
+  getFrontMatter(file: TFile) {
+    return app.metadataCache.getFileCache(file)?.frontmatter;
+  }
 
   isBullet(line: string) {
     return line.length > 1 && ["-", "*", "+"].includes(line[0]) && line[1] === " ";
